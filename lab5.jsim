@@ -1,0 +1,90 @@
+*******************************************************************************
+* LAB #5
+* The Short Circuits
+* - Bangco, Phoebe Hannah
+* - Linchangco, Ricki Rose
+* - Maranan, Erin Clare
+*******************************************************************************
+
+*******************************************************************************
+* We hereby attest to the truth of the following facts:
+*
+* We have not discussed the JSim code in our program with anyone
+* other than our instructor or the teaching assistants assigned to this course.
+*
+* We have not used JSim code obtained from another student, or
+* any other unauthorized source, whether modified or unmodified.
+*
+* If any JSim code or documentation used in our program was
+* obtained from another source, it has been clearly noted with citations in the
+* comments of our program.
+*******************************************************************************
+
+.include "8clocks.jsim"
+.include "nominal.jsim"
+.include "stdcell.jsim"
+
+*******************************************************************************
+* The fa and add32 subcircuits are copied from lab3.jsim. 
+* The fa subcircuit is a full-adder that takes three single-bit inputs (a, b, 
+*   and c_in) and produces a single-bit sum and carry_out.
+* The add32 subcircuit is a 32-bit ripple-carry adder that uses 32 instances of
+*   the fa subcircuit to add two 32-bit numbers along with an initial carry-in.
+*******************************************************************************
+
+.subckt fa a b c_in sum c_out
+    Xxor1 a b axorb xor2
+    Xxor2 axorb c_in sum xor2
+    Xnand1 a b term1 nand2
+    Xnand2 c_in axorb term2 nand2
+    Xnand3 term1 term2 c_out nand2
+.ends
+
+.subckt add32 a[31:0] b[31:0] cin0 sum[31:0] cout[31:30]
+  Xbit a[31:0] b[31:0] cout[30:0] cin0 sum[31:0] cout[31:0] fa
+.ends
+
+*******************************************************************************
+* The as32 subcircuit instantiates a 32-bit adder and a 32-bit multiplexer 
+* to perform addition or subtraction depending on the selected operation.
+*******************************************************************************
+
+.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
+    *INVERT B
+    Xinv b[31:0] b_inv[31:0] inv
+
+    *MULTIPLEXER
+    Xmux b[31:0] b_inv[31:0] op0 b_mux[31:0] mux2
+
+    *INSTANTIATE ADD32
+    Xadd32 a[31:0] b_mux[31:0] op0 fas[31:0] c31 c30 add32
+
+    *NEGATIVE FLAG
+    .connect fas[31] n
+
+    *OVERFLOW FLAG
+    Xxor1 c31 c30 v xor2
+
+    *ZERO FLAG
+    * TO-DO
+
+.ends
+
+********************************************************************************
+* INSTANTIATE ADDER/SUBTRACTOR AND COMPARATOR SUBCIRCUITS
+*********************************************************************************
+
+Xas32 a[31:0] b[31:0] op[0] fas[31:0] c31 c30 add32
+
+
+********************************************************************************
+* NODE PLOTTING:
+********************************************************************************
+.tran 300ns
+.plot a[31:0]
+.plot b[31:0]
+.plot sum[31:0]
+
+********************************************************************************
+* GUIDE QUESTIONS:
+********************************************************************************
