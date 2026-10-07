@@ -70,11 +70,32 @@
 
 .ends
 
+*******************************************************************************
+* The cmp32 subcircuit creates a 32-bit comparator that compares two 32-bit numbers
+* using the negative, overflow, and zero flags from the adder/subtractor subcircuit.
+* When op[1] = 1, the comparator checks for equality using the zero flag.
+* When op[2] = 1, it checks for less than using the negative and overflow flags.
+* When both op[1] and op[2] are 0, it checks for less than or equal using all three flags.
+* The output fcmp[0] is set to 1 if any of the selected conditions are met, and 0 otherwise.
+*
+* By de morgan's law, (op[1] and z) or (op[2] and (n xor v)) is equivalent to 
+* (op[1] nand z) nand (op[2] nand (n xor v))).
+*******************************************************************************
+
+.subckt cmp32 n v z op[2:1] fcmp[31:0]
+    Xnoteq op[1] z noteq nand2
+    Xxor n v nxorv xor2
+    Xnotlt op[2] nxorv notlt nand2
+    Xout noteq notlt fcmp[0] nand2
+    .connect 0 fcmp[31:1]
+.ends
+
 ********************************************************************************
 * INSTANTIATE ADDER/SUBTRACTOR AND COMPARATOR SUBCIRCUITS
 *********************************************************************************
 
-Xas32 a[31:0] b[31:0] op[0] fas[31:0] c31 c30 add32
+Xas32 a[31:0] b[31:0] op[0] fas[31:0] n v z as32
+Xcmp32 n v z op[2:1] fcmp[31:0] cmp32
 
 
 ********************************************************************************
