@@ -66,8 +66,23 @@
     Xxor1 c31 c30 v xor2
 
     *ZERO FLAG
-    * TO-DO
+    * 1. Check 32 bits (8 x 4-input or)
+    * 2. Check reduced 8 bits (2 x 4-input or)
+    * 3. Check reduced 2 bits WITH INVERT (1 x 2-input nor) 
 
+    Xor1 fas[31:28] z1[0] or4
+    Xor2 fas[27:24] z1[1] or4
+    Xor3 fas[23:20] z1[2] or4
+    Xor4 fas[19:16] z1[3] or4
+    Xor5 fas[15:12] z1[4] or4
+    Xor6 fas[11:8]  z1[5] or4
+    Xor7 fas[7:4]   z1[6] or4
+    Xor8 fas[3:0]   z1[7] or4
+
+    Xor9 z1[3:0]  z2[0] or4
+    Xor10 z1[7:4] z2[1] or4
+
+    Xnor1 z2[1:0] z nor2
 .ends
 
 *******************************************************************************
