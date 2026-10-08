@@ -51,10 +51,10 @@
 
 .subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
     *INVERT B
-    Xinv b[31:0] b_inv[31:0] inv
+    Xinv b[31:0] b_inv[31:0] inverter
 
     *MULTIPLEXER
-    Xmux b[31:0] b_inv[31:0] op0 b_mux[31:0] mux2
+    Xmux op0#32 b[31:0] b_inv[31:0] b_mux[31:0] mux2
 
     *INSTANTIATE ADD32
     Xadd32 a[31:0] b_mux[31:0] op0 fas[31:0] c31 c30 add32
@@ -113,17 +113,33 @@ Xas32 a[31:0] b[31:0] op[0] fas[31:0] n v z as32
 Xcmp32 n v z op[2:1] fcmp[31:0] cmp32
 
 Wa a[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
-    + 
+    + 0x00000000 0x55555555 0x00000000 0x55555555 0xFFFFFFFF 0x00000000 0x00000000
+    + 0xAAAAAAAA 0x00000000 0xAAAAAAAA 0x00000001 0xFFFFFFFF 0x80000000 0xFFFFFFFF
+    + 0x00000002 0x00000002 0x00000002 0x80000000 0x80000000 0x80000000 0x00000003
+    + 0x00000003 0x00000003 0x7FFFFFFF 0x7FFFFFFF 0x7FFFFFFF 0x00000003 0x00000003
+    + 0x00000003
 
 Wb b[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
-    +
+    + 0x00000000 0x00000000 0x55555555 0x55555555 0xFFFFFFFF 0x00000000 0xFFFFFFFF
+    + 0x00000000 0xAAAAAAAA 0xAAAAAAAA 0xFFFFFFFF 0x00000001 0x80000000 0xFFFFFFFF
+    + 0xFFFFFFFD 0xFFFFFFFD 0xFFFFFFFD 0x00000002 0x00000002 0x00000002 0x00000005
+    + 0x00000005 0x00000005 0xFFFFFFFE 0xFFFFFFFE 0xFFFFFFFE 0x00000003 0x00000003
+    + 0x00000003
+
+Wc op[2:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
+    + 0 0 0 0 0 1 1 0 0 0 0 0 0 1 3 5 7 3 5 7 3 5 7 3 5 7 3 5 7
+
 ********************************************************************************
 * NODE PLOTTING:
 ********************************************************************************
-.tran 300ns
+.tran 600ns
 .plot a[31:0]
 .plot b[31:0]
-.plot sum[31:0]
+.plot op[2:0]
+.plot fas[31:0]
+.plot n
+.plot v
+.plot z
 
 ********************************************************************************
 * GUIDE QUESTIONS:
