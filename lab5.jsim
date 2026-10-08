@@ -66,32 +66,42 @@
     Xxor1 c31 c30 v xor2
 
     *ZERO FLAG
-    * 1. Check 32 bits (8 x 4-input or)
-    * 2. Check reduced 8 bits (2 x 4-input or)
-    * 3. Check reduced 2 bits WITH INVERT (1 x 2-input nor) 
+    * TO-DO
 
-    Xor1 fas[31:28] z1[0] or4
-    Xor2 fas[27:24] z1[1] or4
-    Xor3 fas[23:20] z1[2] or4
-    Xor4 fas[19:16] z1[3] or4
-    Xor5 fas[15:12] z1[4] or4
-    Xor6 fas[11:8]  z1[5] or4
-    Xor7 fas[7:4]   z1[6] or4
-    Xor8 fas[3:0]   z1[7] or4
+.ends
 
-    Xor9 z1[3:0]  z2[0] or4
-    Xor10 z1[7:4] z2[1] or4
+*******************************************************************************
+* The cmp32 subcircuit creates a 32-bit comparator that compares two 32-bit numbers
+* using the negative, overflow, and zero flags from the adder/subtractor subcircuit.
+* When op[1] = 1, the comparator checks for equality using the zero flag.
+* When op[2] = 1, it checks for less than using the negative and overflow flags.
+* When both op[1] and op[2] are 0, it checks for less than or equal using all three flags.
+* The output fcmp[0] is set to 1 if any of the selected conditions are met, and 0 otherwise.
+*
+* By de morgan's law, (op[1] and z) or (op[2] and (n xor v)) is equivalent to 
+* (op[1] nand z) nand (op[2] nand (n xor v))).
+*******************************************************************************
 
-    Xnor1 z2[1:0] z nor2
+.subckt cmp32 n v z op[2:1] fcmp[31:0]
+    Xnoteq op[1] z noteq nand2
+    Xxor n v nxorv xor2
+    Xnotlt op[2] nxorv notlt nand2
+    Xout noteq notlt fcmp[0] nand2
+    .connect 0 fcmp[31:1]
 .ends
 
 ********************************************************************************
 * INSTANTIATE ADDER/SUBTRACTOR AND COMPARATOR SUBCIRCUITS
 *********************************************************************************
 
-Xas32 a[31:0] b[31:0] op[0] fas[31:0] c31 c30 add32
+Xas32 a[31:0] b[31:0] op[0] fas[31:0] n v z as32
+Xcmp32 n v z op[2:1] fcmp[31:0] cmp32
 
+Wa a[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
+    + 
 
+Wb b[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
+    +
 ********************************************************************************
 * NODE PLOTTING:
 ********************************************************************************
