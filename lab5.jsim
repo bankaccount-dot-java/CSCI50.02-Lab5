@@ -133,13 +133,13 @@ Wc op[2:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
 * NODE PLOTTING:
 ********************************************************************************
 .tran 600ns
-.plot sd(a[31:0])
-.plot sd(b[31:0])
+.plot a[31:0]
+.plot b[31:0]
 .plot op[0]
-.plot sd(fas[31:0])
+.plot fas[31:0]
 .plot n
 .plot v
 .plot z
 .plot op[1]
 .plot op[2]
-.plot sd(fcmp[31:0])
+.plot fcmp[31:0]
