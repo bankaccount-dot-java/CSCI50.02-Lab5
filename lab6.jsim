@@ -116,7 +116,11 @@
 .subckt shift32 a[31:0] b[4:0] op[1:0] fshift[31:0]
 
 ********************************************************************************
-* The alu32 subcircuit 
+* The alu32 subcircuit instantiates four subcircuits that compute their respective 
+* outputs in parallel. The mux4 then selects which output becomes the final result
+* based on alufn[5:4]. If alufn[5:4] is 00, fas from as32 is selected. If it is 01,
+* fbool from bool32 is selected. If it is 10, fshift from shift32 is selected. If 
+* it is 11, fcmp from cmp32 is selected.
 *********************************************************************************
 .subckt alu32 a[31:0] b[31:0] alufn[5:0] f[31:0]
     * as32
