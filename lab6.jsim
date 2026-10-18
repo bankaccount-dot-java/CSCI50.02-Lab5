@@ -1,0 +1,160 @@
+*******************************************************************************
+* LAB #5
+* The Short Circuits
+* - Bangco, Phoebe Hannah
+* - Linchangco, Ricki Rose
+* - Maranan, Erin Clare
+*******************************************************************************
+
+*******************************************************************************
+* We hereby attest to the truth of the following facts:
+*
+* We have not discussed the JSim code in our program with anyone
+* other than our instructor or the teaching assistants assigned to this course.
+*
+* We have not used JSim code obtained from another student, or
+* any other unauthorized source, whether modified or unmodified.
+*
+* If any JSim code or documentation used in our program was
+* obtained from another source, it has been clearly noted with citations in the
+* comments of our program.
+*******************************************************************************
+
+.include "8clocks.jsim"
+.include "nominal.jsim"
+.include "stdcell.jsim"
+
+*******************************************************************************
+* The fa and add32 subcircuits are copied from lab3.jsim. 
+* The fa subcircuit is a full-adder that takes three single-bit inputs (a, b, 
+*   and c_in) and produces a single-bit sum and carry_out.
+* The add32 subcircuit is a 32-bit ripple-carry adder that uses 32 instances of
+*   the fa subcircuit to add two 32-bit numbers along with an initial carry-in.
+*******************************************************************************
+
+.subckt fa a b c_in sum c_out
+    Xxor1 a b axorb xor2
+    Xxor2 axorb c_in sum xor2
+    Xnand1 a b term1 nand2
+    Xnand2 c_in axorb term2 nand2
+    Xnand3 term1 term2 c_out nand2
+.ends
+
+.subckt add32 a[31:0] b[31:0] cin0 sum[31:0] cout[31:30]
+  Xbit a[31:0] b[31:0] cout[30:0] cin0 sum[31:0] cout[31:0] fa
+.ends
+
+*******************************************************************************
+* The as32 subcircuit instantiates a 32-bit adder and a 32-bit multiplexer 
+* to perform addition or subtraction depending on the selected operation.
+*******************************************************************************
+
+.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
+    *INVERT B
+    Xinv b[31:0] b_inv[31:0] inv
+
+    *MULTIPLEXER
+    Xmux b[31:0] b_inv[31:0] op0 b_mux[31:0] mux2
+
+    *INSTANTIATE ADD32
+    Xadd32 a[31:0] b_mux[31:0] op0 fas[31:0] c31 c30 add32
+
+    *NEGATIVE FLAG
+    .connect fas[31] n
+
+    *OVERFLOW FLAG
+    Xxor1 c31 c30 v xor2
+
+    *ZERO FLAG
+    * 1. Check 32 bits (8 x 4-input or)
+    * 2. Check reduced 8 bits (2 x 4-input or)
+    * 3. Check reduced 2 bits WITH INVERT (1 x 2-input nor) 
+
+    Xor1 fas[31:28] z1[0] or4
+    Xor2 fas[27:24] z1[1] or4
+    Xor3 fas[23:20] z1[2] or4
+    Xor4 fas[19:16] z1[3] or4
+    Xor5 fas[15:12] z1[4] or4
+    Xor6 fas[11:8]  z1[5] or4
+    Xor7 fas[7:4]   z1[6] or4
+    Xor8 fas[3:0]   z1[7] or4
+
+    Xor9 z1[3:0]  z2[0] or4
+    Xor10 z1[7:4] z2[1] or4
+
+    Xnor1 z2[1:0] z nor2
+.ends
+
+*******************************************************************************
+* The cmp32 subcircuit creates a 32-bit comparator that compares two 32-bit numbers
+* using the negative, overflow, and zero flags from the adder/subtractor subcircuit.
+* When op[1] = 1, the comparator checks for equality using the zero flag.
+* When op[2] = 1, it checks for less than using the negative and overflow flags.
+* When both op[1] and op[2] are 0, it checks for less than or equal using all three flags.
+* The output fcmp[0] is set to 1 if any of the selected conditions are met, and 0 otherwise.
+*
+* By de morgan's law, (op[1] and z) or (op[2] and (n xor v)) is equivalent to 
+* (op[1] nand z) nand (op[2] nand (n xor v))).
+*******************************************************************************
+
+.subckt cmp32 n v z op[2:1] fcmp[31:0]
+    Xnoteq op[1] z noteq nand2
+    Xxor n v nxorv xor2
+    Xnotlt op[2] nxorv notlt nand2
+    Xout noteq notlt fcmp[0] nand2
+    .connect 0 fcmp[31:1]
+.ends
+
+********************************************************************************
+* bool32 desc
+*********************************************************************************
+.subckt bool32 a[31:0] b[31:0] op[3:0] fbool[31:0]
+
+********************************************************************************
+* shift32 desc
+*********************************************************************************
+.subckt shift32 a[31:0] b[4:0] op[1:0] fshift[31:0]
+
+********************************************************************************
+* The alu32 subcircuit 
+*********************************************************************************
+.subckt alu32 a[31:0] b[31:0] alufn[5:0] f[31:0]
+    * as32
+    Xas32 a[31:0] b[31:0] alufn[0] fas[31:0] n v z as32
+
+    * bool32
+    Xbool32 a[31:0] b[31:0] alufn[3:0] fbool[31:0] bool32
+
+    * shift32
+    Xshift32 a[31:0] b[4:0] alufn[1:0] fshift[31:0] shift32
+
+    * cmp32 (chained with as32)
+    Xcmp32 n v z alufn[2:1] fcmp[31:0] cmp32
+
+    * final output using mux4
+    Xmux alufn[4] alufn[5] fas[31:0] fbool[31:0] fshift[31:0] fcmp[31:0] f[31:0] mux4
+.ends
+
+********************************************************************************
+* INSTANTIATE ADDER/SUBTRACTOR AND COMPARATOR SUBCIRCUITS
+*********************************************************************************
+
+
+Xcmp32 n v z op[2:1] fcmp[31:0] cmp32
+
+Wa a[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
+    + 
+
+Wb b[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
+    +
+********************************************************************************
+* NODE PLOTTING:
+********************************************************************************
+.tran 300ns
+.plot a[31:0]
+.plot b[31:0]
+.plot sum[31:0]
+
+********************************************************************************
+* GUIDE QUESTIONS:
+********************************************************************************
