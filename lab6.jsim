@@ -51,10 +51,11 @@
 
 .subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
     *INVERT B
-    Xinv b[31:0] b_inv[31:0] inv
+    Xinv b[31:0] b_inv[31:0] inverter
 
     *MULTIPLEXER
-    Xmux b[31:0] b_inv[31:0] op0 b_mux[31:0] mux2
+    Xmux b[31:0] b_inv[31:0] op0#32 b_mux[31:0] mux2
+    * ^^ revisions by Phoebe: added #32 to op0
 
     *INSTANTIATE ADD32
     Xadd32 a[31:0] b_mux[31:0] op0 fas[31:0] c31 c30 add32
@@ -109,7 +110,7 @@
 * bool32 desc
 *********************************************************************************
 .subckt bool32 a[31:0] b[31:0] op[3:0] fbool[31:0]
-    Xbool a[31:0] b[31:0] op[0] op[1] op[2] op[3] fbool[31:0] mux4
+    Xbool a[31:0] b[31:0] op[0]#32 op[1]#32 op[2]#32 op[3]#32 fbool[31:0] mux4
 .ends
 
 ********************************************************************************
@@ -176,28 +177,37 @@
     Xcmp32 n v z alufn[2:1] fcmp[31:0] cmp32
 
     * final output using mux4
-    Xmux alufn[4] alufn[5] fas[31:0] fbool[31:0] fshift[31:0] fcmp[31:0] f[31:0] mux4
+    Xmux alufn[4]#32 alufn[5]#32 fas[31:0] fbool[31:0] fshift[31:0] fcmp[31:0] f[31:0] mux4
+    *  ^^ revisions by Phoebe: added #32 to alufn[4] and alufn[5]
 .ends
 
 ********************************************************************************
 * INSTANTIATE ADDER/SUBTRACTOR AND COMPARATOR SUBCIRCUITS
 *********************************************************************************
 
+Xalu32 a[31:0] b[31:0] alufn[5:0] f[31:0] alu32
 
-Xcmp32 n v z op[2:1] fcmp[31:0] cmp32
+Wa a[31:0] nrz(0v,5.0v,20ns,0ns,.1ns,.1ns)
++ -1 0x55555555 0xAAAAAAAA 1 -2 -1 -1 0x55555555 0 -1 0x55555555 0
++ -1 0x55555555 0 -1 0x55555555 0 -1 0x55555555 0 1 -1 -1 0x55555555 0xAAAAAAAA -1
++ 0x55555555 0xAAAAAAAA -1 -1 15 0 -1 15 0 -1 15 0
 
-Wa a[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
-    + 
+Wb b[31:0] nrz(0v,5.0v,20ns,0ns,.1ns,.1ns)
++ 1 0x55555555 0xAAAAAAAA 1 0 -1 -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0
++ -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0 31 15 0 24 24 31
++ 24 24 31 1 15 -256 1 15 -256 1 15 -256
 
-Wb b[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
-    +
+Wf alufn[5:0] nrz(0v,5.0v,60ns,0ns,.1ns,.1ns)
++ 0 1 24 30 22 26 21 32 33 35 51 53 55
+
 ********************************************************************************
 * NODE PLOTTING:
 ********************************************************************************
-.tran 300ns
+.tran 800ns
 .plot a[31:0]
 .plot b[31:0]
-.plot sum[31:0]
+.plot alufn[5:0]
+.plot f[31:0]
 
 ********************************************************************************
 * GUIDE QUESTIONS:
