@@ -1,5 +1,5 @@
 *******************************************************************************
-* LAB #5
+* LAB #6
 * The Short Circuits
 * - Bangco, Phoebe Hannah
 * - Linchangco, Ricki Rose
@@ -54,8 +54,7 @@
     Xinv b[31:0] b_inv[31:0] inverter
 
     *MULTIPLEXER
-    Xmux b[31:0] b_inv[31:0] op0#32 b_mux[31:0] mux2
-    * ^^ revisions by Phoebe: added #32 to op0
+    Xmux op0#32 b[31:0] b_inv[31:0] b_mux[31:0] mux2
 
     *INSTANTIATE ADD32
     Xadd32 a[31:0] b_mux[31:0] op0 fas[31:0] c31 c30 add32
@@ -208,12 +207,12 @@ Wf alufn[5:0] nrz(0v,5.0v,60ns,0ns,.1ns,.1ns)
 *********************************************************************************
 * ---- as32 (alufn[5:4] = 00) ----
 * alufn = 000000 (0)  ADD
-*   1.  a = -1,         b = 1          --> f = 0x00000000
+*   1.  a = -1,         b = 1          --> f = 0x00000000 
 *   2.  a = 0x55555555, b = 0x55555555 --> f = 0xAAAAAAAA
 *   3.  a = 0xAAAAAAAA, b = 0xAAAAAAAA --> f = 0x55555554 (overflow, upper carry dropped)
 * alufn = 000001 (1)  SUB
 *   4.  a = 1,  b = 1   --> f = 0x00000000
-*   5.  a = -2, b = 0   --> f = 0xFFFFFFFE
+*   5.  a = -2, b = 0   --> f = 0xFFFFFFFE 
 *   6.  a = -1, b = -1  --> f = 0x00000000
 *
 * ---- bool32 (alufn[5:4] = 01, op = alufn[3:0]) ----
@@ -229,39 +228,39 @@ Wf alufn[5:0] nrz(0v,5.0v,60ns,0ns,.1ns,.1ns)
 *   13. a = -1,         b = -1         --> f = 0x00000000
 *   14. a = 0x55555555, b = 0xAAAAAAAA --> f = 0xFFFFFFFF
 *   15. a = 0,          b = 0          --> f = 0x00000000
-* alufn = 011010 (26)  op = 1010  "A" (passes a through, ignores b)
+* alufn = 011010 (26)  op = 1010  A
 *   16. a = -1,         b = -1         --> f = 0xFFFFFFFF
 *   17. a = 0x55555555, b = 0xAAAAAAAA --> f = 0x55555555
 *   18. a = 0,          b = 0          --> f = 0x00000000
-* alufn = 010101 (21)  op = 0101  NOT A (ignores b)
+* alufn = 010101 (21)  op = 0101  NOT A 
 *   19. a = -1,         b = -1         --> f = 0x00000000
 *   20. a = 0x55555555, b = 0xAAAAAAAA --> f = 0xAAAAAAAA
 *   21. a = 0,          b = 0          --> f = 0xFFFFFFFF
 *
 * ---- shift32 (alufn[5:4] = 10, op = alufn[1:0], shift amount = b[4:0]) ----
-* alufn = 100000 (32)  SHL
+* alufn = 100000 (32)  SHIFT LEFT
 *   22. a = 1,  b = 31  --> f = 0x80000000
 *   23. a = -1, b = 15  --> f = 0xFFFF8000
 *   24. a = -1, b = 0   --> f = 0xFFFFFFFF (no shift)
-* alufn = 100001 (33)  SHR
+* alufn = 100001 (33)  SHIFT RIGHT
 *   25. a = 0x55555555, b = 24 --> f = 0x00000055
 *   26. a = 0xAAAAAAAA, b = 24 --> f = 0x000000AA
 *   27. a = -1,         b = 31 --> f = 0x00000001
-* alufn = 100011 (35)  SRA
+* alufn = 100011 (35)  ARITHMETIC SHIFT RIGHT
 *   28. a = 0x55555555, b = 24 --> f = 0x00000055 (sign bit 0, fills with 0s)
 *   29. a = 0xAAAAAAAA, b = 24 --> f = 0xFFFFFFAA (sign bit 1, fills with 1s)
 *   30. a = -1,         b = 31 --> f = 0xFFFFFFFF
 *
 * ---- cmp32 (alufn[5:4] = 11, alufn[2:1] selects compare, signed) ----
-* alufn = 110011 (51)  CMPEQ (a == b)
+* alufn = 110011 (51)  EQUALS (a == b)
 *   31. a = -1, b = 1    --> f = 0x00000000
 *   32. a = 15, b = 15   --> f = 0x00000001
 *   33. a = 0,  b = -256 --> f = 0x00000000
-* alufn = 110101 (53)  CMPLT (a < b)
+* alufn = 110101 (53)  LESS THAN (a < b)
 *   34. a = -1, b = 1    --> f = 0x00000001 (signed: -1 < 1)
 *   35. a = 15, b = 15   --> f = 0x00000000
 *   36. a = 0,  b = -256 --> f = 0x00000000 (0 is not < -256)
-* alufn = 110111 (55)  CMPLE (a <= b)
+* alufn = 110111 (55)  LESS THAN OR EQUAL (a <= b)
 *   37. a = -1, b = 1    --> f = 0x00000001
 *   38. a = 15, b = 15   --> f = 0x00000001
 *   39. a = 0,  b = -256 --> f = 0x00000000
@@ -272,5 +271,6 @@ Wf alufn[5:0] nrz(0v,5.0v,60ns,0ns,.1ns,.1ns)
 .tran 800ns
 .plot a[31:0]
 .plot b[31:0]
-.plot alufn[5:0]
+.plot b(alufn[5:4])
+.plot b(alufn[3:0])
 .plot f[31:0]
