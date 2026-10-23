@@ -35,9 +35,24 @@
 .subckt fa a b c_in sum c_out
     Xxor1 a b axorb xor2
     Xxor2 axorb c_in sum xor2
-    Xnand1 a b term1 nand2
-    Xnand2 c_in axorb term2 nand2
-    Xnand3 term1 term2 c_out nand2
+    Xmux axorb a c_in c_out mux2
+    *******************************************************************************
+    * OPTIMIZATION
+    * Changed:
+        * Xnand1 a b term1 nand2
+        * Xnand2 c_in axorb term2 nand2
+        * Xnand3 term1 term2 c_out nand2  
+    * into:
+        * Xmux axorb a c_in c_out mux2
+
+    * Reasoning: It was observed via truth table that if axorb = 0, a and b are
+    * equal, and the value of c_out = a = b. On the other hand, if axorb = 1, 
+    * c_out = c_cin. Thus, a 3 NAND gate implementation of c_out can be reduced
+    * to only 1 multiplexer if S = axorb, D0 = either a or b (we chose a), and
+    * D1 = c_in.
+
+    * This saves 64 gates!! (2 x 32)
+    *******************************************************************************
 .ends
 
 .subckt add32 a[31:0] b[31:0] cin0 sum[31:0] cout[31:30]
