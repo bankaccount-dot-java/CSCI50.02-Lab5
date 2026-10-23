@@ -107,7 +107,11 @@
 .ends
 
 ********************************************************************************
-* bool32 subcircuit
+* bool32
+* The bool32 subcircuit instantiates a 32-bit boolean circuit using a 4-input multiplexer.
+* The circuit takes two 32-bit inputs (a[31:0] and b[31:0]), and a
+* 4-bit operation code (op[3:0]) to perform various boolean operations,
+* then outputs the result as a 32-bit output (fbool[31:0]).
 *********************************************************************************
 .subckt bool32 a[31:0] b[31:0] op[3:0] fbool[31:0]
     Xbool a[31:0] b[31:0] op[0]#32 op[1]#32 op[2]#32 op[3]#32 fbool[31:0] mux4
@@ -116,7 +120,6 @@
 ********************************************************************************
 * shift32 subcircuit
 *********************************************************************************
-
 * Helper function that reverses the bits based on the value of op
 .subckt reverse op torev[31:0] out[31:0]
     * If op is 0 (Shift Left is 00), output torev[0:31] (reversed)   
