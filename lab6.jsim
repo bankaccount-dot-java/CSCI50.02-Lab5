@@ -200,9 +200,68 @@ Wb b[31:0] nrz(0v,5.0v,20ns,0ns,.1ns,.1ns)
 Wf alufn[5:0] nrz(0v,5.0v,60ns,0ns,.1ns,.1ns)
 + 0 1 24 30 22 26 21 32 33 35 51 53 55
 
-* Explanation of Test Cases:
-* 1. a = -1, b = 1, alufn = 000000 --> use as32, add 0 and 0
-* 2. a = 0x55555555, b = 0x55555555, alufn = 011000 (24) --> use bool32, 
+********************************************************************************
+* DESCRIPTION OF TEST CASES
+*********************************************************************************
+* ---- as32 (alufn[5:4] = 00) ----
+* alufn = 000000 (0)  ADD
+*   1.  a = -1,         b = 1          --> f = 0x00000000
+*   2.  a = 0x55555555, b = 0x55555555 --> f = 0xAAAAAAAA
+*   3.  a = 0xAAAAAAAA, b = 0xAAAAAAAA --> f = 0x55555554 (overflow, upper carry dropped)
+* alufn = 000001 (1)  SUB
+*   4.  a = 1,  b = 1   --> f = 0x00000000
+*   5.  a = -2, b = 0   --> f = 0xFFFFFFFE
+*   6.  a = -1, b = -1  --> f = 0x00000000
+*
+* ---- bool32 (alufn[5:4] = 01, op = alufn[3:0]) ----
+* alufn = 011000 (24)  op = 1000  AND
+*   7.  a = -1,         b = -1         --> f = 0xFFFFFFFF
+*   8.  a = 0x55555555, b = 0xAAAAAAAA --> f = 0x00000000
+*   9.  a = 0,          b = 0          --> f = 0x00000000
+* alufn = 011110 (30)  op = 1110  OR
+*   10. a = -1,         b = -1         --> f = 0xFFFFFFFF
+*   11. a = 0x55555555, b = 0xAAAAAAAA --> f = 0xFFFFFFFF
+*   12. a = 0,          b = 0          --> f = 0x00000000
+* alufn = 010110 (22)  op = 0110  XOR
+*   13. a = -1,         b = -1         --> f = 0x00000000
+*   14. a = 0x55555555, b = 0xAAAAAAAA --> f = 0xFFFFFFFF
+*   15. a = 0,          b = 0          --> f = 0x00000000
+* alufn = 011010 (26)  op = 1010  "A" (passes a through, ignores b)
+*   16. a = -1,         b = -1         --> f = 0xFFFFFFFF
+*   17. a = 0x55555555, b = 0xAAAAAAAA --> f = 0x55555555
+*   18. a = 0,          b = 0          --> f = 0x00000000
+* alufn = 010101 (21)  op = 0101  NOT A (ignores b)
+*   19. a = -1,         b = -1         --> f = 0x00000000
+*   20. a = 0x55555555, b = 0xAAAAAAAA --> f = 0xAAAAAAAA
+*   21. a = 0,          b = 0          --> f = 0xFFFFFFFF
+*
+* ---- shift32 (alufn[5:4] = 10, op = alufn[1:0], shift amount = b[4:0]) ----
+* alufn = 100000 (32)  SHL
+*   22. a = 1,  b = 31  --> f = 0x80000000
+*   23. a = -1, b = 15  --> f = 0xFFFF8000
+*   24. a = -1, b = 0   --> f = 0xFFFFFFFF (no shift)
+* alufn = 100001 (33)  SHR
+*   25. a = 0x55555555, b = 24 --> f = 0x00000055
+*   26. a = 0xAAAAAAAA, b = 24 --> f = 0x000000AA
+*   27. a = -1,         b = 31 --> f = 0x00000001
+* alufn = 100011 (35)  SRA
+*   28. a = 0x55555555, b = 24 --> f = 0x00000055 (sign bit 0, fills with 0s)
+*   29. a = 0xAAAAAAAA, b = 24 --> f = 0xFFFFFFAA (sign bit 1, fills with 1s)
+*   30. a = -1,         b = 31 --> f = 0xFFFFFFFF
+*
+* ---- cmp32 (alufn[5:4] = 11, alufn[2:1] selects compare, signed) ----
+* alufn = 110011 (51)  CMPEQ (a == b)
+*   31. a = -1, b = 1    --> f = 0x00000000
+*   32. a = 15, b = 15   --> f = 0x00000001
+*   33. a = 0,  b = -256 --> f = 0x00000000
+* alufn = 110101 (53)  CMPLT (a < b)
+*   34. a = -1, b = 1    --> f = 0x00000001 (signed: -1 < 1)
+*   35. a = 15, b = 15   --> f = 0x00000000
+*   36. a = 0,  b = -256 --> f = 0x00000000 (0 is not < -256)
+* alufn = 110111 (55)  CMPLE (a <= b)
+*   37. a = -1, b = 1    --> f = 0x00000001
+*   38. a = 15, b = 15   --> f = 0x00000001
+*   39. a = 0,  b = -256 --> f = 0x00000000
 
 ********************************************************************************
 * NODE PLOTTING:
