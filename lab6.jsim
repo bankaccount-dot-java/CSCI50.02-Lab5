@@ -113,7 +113,45 @@
 ********************************************************************************
 * shift32 desc
 *********************************************************************************
+
+* Helper function that reverses the bits based on the value of op[0]
+.subckt reverse op torev[31:0] out[31:0]
+    * If op is 0 (Shift Left is 00), output torev[0:31] (reversed)   
+    * Else (Logical and Arithmetic Shift Right, 01 and 11), output torev[31:0] (itself)
+    Xin op#32 torev[0:31] torev[31:0] out[31:0] mux2
+.ends
+
 .subckt shift32 a[31:0] b[4:0] op[1:0] fshift[31:0]
+    * Performs an AND operation with op[1] and MSB of A to decide what to use as
+    * use as filler after shifting
+    Xfill op[1] a[31] fill and2
+
+    * If Shift Right (Arithmetic and Logical), input is itself,
+    * If Shift Left, the input to be shifted is reversed
+    Xin op[0] a[31:0] toshift[31:0] reverse
+
+    * SHIFTING
+    * 5th bit mux; shift by 16
+    Xbit5 b[4]#32 toshift[31:0] fill#16 toshift[31:16] shift16[31:0] mux2
+
+    * 4th bit mux; shift by 8
+    Xbit4 b[3]#32 shift16[31:0] fill#8 shift16[31:8] shift8[31:0] mux2
+
+    * 3rd bit mux; shift by 4
+    Xbit3 b[2]#32 shift8[31:0] fill#4 shift8[31:4] shift4[31:0] mux2
+
+    * 2nd bit mux; shift by 2
+    Xbit2 b[1]#32 shift4[31:0] fill#2 shift4[31:2] shift2[31:0] mux2
+
+    * 1st bit mux; shift by 1
+    Xbit1 b[0]#32 shift2[31:0] fill#1 shift2[31:1] shiftdone[31:0] mux2
+    
+    * If Shift Left, it reverses the bits once again
+    * If Shift Right (Arithmetic and Logical), the output is retained
+    Xout op[0] shiftdone[31:0] fshift[31:0] reverse
+
+.ends
+
 
 ********************************************************************************
 * The alu32 subcircuit instantiates four subcircuits that compute their respective 
