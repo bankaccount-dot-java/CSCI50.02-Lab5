@@ -109,12 +109,14 @@
 * bool32 desc
 *********************************************************************************
 .subckt bool32 a[31:0] b[31:0] op[3:0] fbool[31:0]
+    Xbool a[31:0] b[31:0] op[0] op[1] op[2] op[3] fbool[31:0] mux4
+.ends
 
 ********************************************************************************
-* shift32 desc
+* shift32 subcircuit
 *********************************************************************************
 
-* Helper function that reverses the bits based on the value of op[0]
+* Helper function that reverses the bits based on the value of op
 .subckt reverse op torev[31:0] out[31:0]
     * If op is 0 (Shift Left is 00), output torev[0:31] (reversed)   
     * Else (Logical and Arithmetic Shift Right, 01 and 11), output torev[31:0] (itself)
